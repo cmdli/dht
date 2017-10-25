@@ -1,0 +1,17 @@
+Distributed Hash Table:
+
+- Bunch of nodes in network
+- Get k:
+  - Ask nodes in network for k or nodes closer to k
+- Put k:
+  - Get nodes in network near k and ask them to hold k
+- Overlay network:
+  - Maintained references from node to node to speed up get/put
+  - Typically logarithmic (nodes reference close nodes and exponentially farther nodes)
+  - Allows O(log n) get/put
+
+Implementation:
+ - Get:
+   - From routing table, get set of nodes near id
+   - Query nodes for other nodes near id
+   - Get closest nodes near id until finding node id
