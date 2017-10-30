@@ -13,6 +13,7 @@ public class TestServer {
         }
         int port = Integer.parseInt(args[0]);
         try (ServerSocket serverSocket = new ServerSocket(port);) {
+            System.out.printf("Started server at %s:%d\n", InetAddress.getLocalHost(), serverSocket.getLocalPort());
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 BufferedReader networkIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));

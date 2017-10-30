@@ -1,21 +1,21 @@
 
 package com.cmdli.dht;
 
-import java.util.BitSet;
+import java.math.BigInteger;
 import java.net.InetAddress;
 
 public class Node {
-    private BitSet id;
+    private BigInteger id;
     private InetAddress address;
     private int port;
 
-    public Node(BitSet id, InetAddress address, int port) {
+    public Node(BigInteger id, InetAddress address, int port) {
         this.id = id;
         this.address = address;
         this.port = port;
     }
 
-    public BitSet id() {
+    public BigInteger id() {
         return id;
     }
 
@@ -28,6 +28,19 @@ public class Node {
     }
 
     public String toString() {
-        return String.format("0x%x", id.hashCode()) + " " + address;
+        return "0x" + id.toString(16) + " " + address;
+    }
+
+    public boolean equals(Object other) {
+        if (!(other instanceof Node))
+            return false;
+        Node otherNode = (Node)other;
+        if (!otherNode.id.equals(this.id))
+            return false;
+        if (!otherNode.address.equals(this.address))
+            return false;
+        if (otherNode.port != this.port)
+            return false;
+        return true;
     }
 }

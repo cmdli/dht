@@ -3,7 +3,7 @@ package com.cmdli.dht;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.BitSet;
+import java.math.BigInteger;
 import java.util.Arrays;
 
 import com.cmdli.dht.Node;
@@ -25,11 +25,10 @@ public class RoutingTable {
     }
 
     public void addNode(Node node) {
-        int bucketI = firstDifferingBit(node.id(), currentNode.id());
-        if (bucketI == -1) { // Bits are exactly the same
+        int bucketI = currentNode.id().xor(node.id()).bitLength()-1;
+        if (bucketI < 0) { // Bits are exactly the same
             return;
         }
-
         List<Node> bucket = kBuckets.get(bucketI);
         if (bucket.size() < k) {
             bucket.add(node);
@@ -38,18 +37,12 @@ public class RoutingTable {
         }
     }
 
-    public List<Node> getNodesNearID(BitSet id) {
-        int bucketI = firstDifferingBit(id, currentNode.id());
+    public List<Node> getNodesNearID(BigInteger id) {
+        int bucketI = currentNode.id().xor(id).bitLength()-1;
         if (bucketI == -1)  {
             return Arrays.asList(currentNode);
         }
         return kBuckets.get(bucketI);
-    }
-
-    private int firstDifferingBit(BitSet id1, BitSet id2) {
-        BitSet difference = (BitSet)id1.clone();
-        difference.xor(id2);
-        return difference.nextSetBit(0);
     }
 
     public String toString() {
