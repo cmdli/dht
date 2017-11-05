@@ -16,7 +16,7 @@ jar {
     }
 }
 
-mainClassName = System.getProperty("exec.MainClass") ?: 'com.cmdli.dht.DHT'
+mainClassName = System.getProperty("exec.MainClass") ?: 'None'
 
 run {
     if (project.hasProperty("appArgs")) {
