@@ -32,12 +32,11 @@ public class DHT {
 
     public void startServer(int port) {
         DHT dht = this;
-        Thread serverThread = new Thread(new Runnable() {
+        new Thread(new Runnable() {
                 public void run() {
                     dht.serve(port);
                 }
-            });
-        serverThread.start();
+            }).start();
     }
 
     public void serve(int port) {
@@ -52,7 +51,7 @@ public class DHT {
         }
     }
 
-    final static int MAX_FETCH_NODE_SET_SIZE = 20; // Number of close nodes to keep when fetching
+    final static int MAX_FETCH_NODE_SET_SIZE = 20; // Size of closest nodes set when fetching
     public String get(BigInteger key) {
         System.out.println("Fetching: 0x" + key.toString(16));
         Comparator<Node> closeToFar = (Node n1, Node n2) -> n1.id().xor(key).compareTo(n2.id().xor(key));
@@ -63,42 +62,19 @@ public class DHT {
         HashSet<Node> visitedNodes = new HashSet<Node>(nodesToProcess);
         while (!nodesToProcess.isEmpty()) {
             Node nextNode = nodesToProcess.poll();
-            System.out.println(nextNode);
-            /*List<Node> newNodes = null;
-            try (
-                 Socket socket = new Socket(nextNode.address(), nextNode.port());
-                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                 ) {
-                // Query node
-                Gson gson = new Gson();
-                GetRequest getRequest = new GetRequest(key);
-                String getRequestStr = gson.toJson(getRequest);
-                System.out.println("Request to " + nextNode + ": " + getRequestStr);
-                out.write(gson.toJson(getRequest));
-
-                // Get response
-                String response = in.readLine();
-                System.out.println("Response: " + response);
-                GetResponse getResponse = gson.fromJson(response, GetResponse.class);
-                if (getResponse != null) {
-                    newNodes = getResponse.nodes;
+            System.out.println("Processing " + nextNode);
+            List<Node> newNodes = new FetchProtocol().fetch(key, nextNode);
+            if (newNodes != null) {
+                for (Node node : newNodes) {
+                    if (!visitedNodes.contains(node) &&
+                        closeToFar.compare(node,closestNodes.peek()) < 0) {
+                        closestNodes.add(node);
+                        if (closestNodes.size() > MAX_FETCH_NODE_SET_SIZE)
+                            closestNodes.poll();
+                        nodesToProcess.add(node);
+                    }
                 }
-            } catch (Exception e) {
-                System.err.println(e);
             }
-            /*for (Node node : getResponse.nodes) {
-                // Add nodes if they are closer than the current ones
-                if (!visitedNodes.contains(node) &&
-                    (closestNodes.size() < maxNodeSetSize ||
-                     closestNodes.comparator().compare(closestNodes.peek(),node) < 0)) {
-                    closestNodes.add(node);
-                    if (closestNodes.size() > maxNodeSetSize)
-                        closestNodes.poll();
-                    nodesToProcess.add(node);
-                    visitedNodes.add(node);
-                }
-                }*/
         }
         return "None";
     }
@@ -116,6 +92,8 @@ public class DHT {
             .toString();
     }
 
+    // -------------------------------­-----------
+    
     public static BigInteger randomID(int numBits) {
         Random random = new Random();
         return new BigInteger(numBits, random);

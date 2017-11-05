@@ -10,6 +10,7 @@ import com.google.gson.*;
 
 import com.cmdli.dht.messages.Message;
 import com.cmdli.dht.DHT;
+import com.cmdli.dht.Connection;
 
 class GetRequest extends Message {
     BigInteger key;
@@ -30,6 +31,8 @@ class GetResponse extends Message {
 
 public class FetchProtocol {
 
+    public static final Gson GSON = new Gson();
+    
     private RoutingTable table;
 
     public FetchProtocol() {
@@ -42,79 +45,54 @@ public class FetchProtocol {
 
     
     public List<Node> fetch(BigInteger key, Node node) {
-        List<Node> result = null;
-        System.out.printf("Connecting to %s:%d\n", node.address(), node.port());
-        try (
-             Socket socket = new Socket(node.address(), node.port());
-             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-             ) {
-            GetRequest request = new GetRequest(key);
-            Gson gson = new Gson();
-            String output = gson.toJson(request) + "\n";
-            System.out.println("Sending - " + output);
-            out.write(output);
-            out.flush();
-            String inputLine = in.readLine();
-            System.out.println("Received - " + inputLine);
-            GetResponse response = gson.fromJson(inputLine, GetResponse.class);
-            if (response != null) {
-                result = response.nodes;
-            }
-        } catch (Exception e) {
-            System.err.println(e);
-        }
-        return result;
+        Connection connection = new Connection().connect(node);
+        String output = GSON.toJson(new GetRequest(key)) + "\n";
+        connection.send(output);
+        GetResponse response = GSON.fromJson(connection.receive(), GetResponse.class);
+        connection.close();
+        return response != null ? response.nodes : null;
     }
 
-    public void respond(Socket socket, String initialMessage) {
-        try (
-             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-             ) {
-            Gson gson = new Gson();
-            GetRequest request = gson.fromJson(initialMessage, GetRequest.class);
-            if (request == null)
-                return;
-            GetResponse response = new GetResponse(table.getNodesNearID(request.key));
-            String responseString = gson.toJson(response);
-            System.out.println("Sending - " + responseString);
-            writer.write(gson.toJson(response));
-        } catch (Exception e) {
-            System.err.println(e);
-        }
+    public void respond(Connection connection, String initialMessage) {
+        GetRequest request = GSON.fromJson(initialMessage, GetRequest.class);
+        if (request == null)
+            return;
+        GetResponse response = new GetResponse(table.getNodesNearID(request.key));
+        connection.send(GSON.toJson(response));
     }
 
     public static void main(String[] args) throws UnknownHostException {
         System.out.println("Starting FetchProtocol...");
 
         if (args[0].equals("server")) {
+            Node currentNode = new Node(DHT.randomID(DHT.ID_LENGTH), null, -1);
+            RoutingTable table = new RoutingTable(DHT.K, currentNode, DHT.ID_LENGTH);
+            for (int i = 0; i < 10; i++) {
+                table.addNode(new Node(DHT.randomID(DHT.ID_LENGTH), null, -1));
+            }
+            System.out.println(table);
             try (
                  ServerSocket serverSocket = new ServerSocket(0);
                  ) {
                 System.out.println("Started server at port " + serverSocket.getLocalPort());
-                Socket client = serverSocket.accept();
-                System.out.printf("Connected to %s:%d\n",
-                                  client.getInetAddress(),
-                                  client.getPort());
-                try {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                    String initialMessage = reader.readLine();
-                    Node currentNode = new Node(DHT.randomID(DHT.ID_LENGTH), null, -1);
-                    RoutingTable table = new RoutingTable(DHT.K, currentNode, DHT.ID_LENGTH);
+                try (Connection connection = new Connection(serverSocket.accept());) {
+                    System.out.printf("Connected to %s:%d\n",
+                                      connection.address(),
+                                      connection.port());
+                    String initialMessage = connection.receive();
                     FetchProtocol serverProtocol = new FetchProtocol(table);
-                    System.out.println("Received - " + initialMessage);
-                    serverProtocol.respond(client, initialMessage);
-                } finally {
-                    client.close();
+                    serverProtocol.respond(connection, initialMessage);
                 }
             } catch (Exception e) {
                 System.err.println(e);
             }
         } else {
             int port = Integer.parseInt(args[0]);
-            FetchProtocol protocol = new FetchProtocol();
             BigInteger key = DHT.randomID(DHT.ID_LENGTH);
-            Node node = new Node(DHT.randomID(DHT.K), InetAddress.getLocalHost(), port);
+            Node node = new Node(DHT.randomID(DHT.K),
+                                 InetAddress.getLocalHost(),
+                                 port);
+            FetchProtocol protocol = new FetchProtocol();
             protocol.fetch(key, node);
         }
     }
