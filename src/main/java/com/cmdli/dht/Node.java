@@ -28,7 +28,7 @@ public class Node {
     }
 
     public String toString() {
-        return "0x" + id.toString(16) + " " + address;
+        return "0x" + id.toString(16) + " " + address + ":" + port;
     }
 
     public boolean equals(Object other) {

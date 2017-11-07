@@ -11,11 +11,11 @@ import com.cmdli.dht.Node;
 public class RoutingTable {
     private int k;
     private List<List<Node>> kBuckets;
-    private Node currentNode;
+    private BigInteger currentKey;
     private int idLength;
 
-    public RoutingTable(int k, Node currentNode, int idLength) {
-        this.currentNode = currentNode;
+    public RoutingTable(int k, BigInteger currentKey, int idLength) {
+        this.currentKey = currentKey;
         this.kBuckets = new ArrayList<List<Node>>();
         this.idLength = idLength;
         for (int i = 0; i < idLength; i++) {
@@ -25,7 +25,7 @@ public class RoutingTable {
     }
 
     public void addNode(Node node) {
-        int bucketI = currentNode.id().xor(node.id()).bitLength()-1;
+        int bucketI = currentKey.xor(node.id()).bitLength()-1;
         if (bucketI < 0) { // Bits are exactly the same
             return;
         }
@@ -38,17 +38,17 @@ public class RoutingTable {
     }
 
     public List<Node> getNodesNearID(BigInteger id) {
-        int bucketI = currentNode.id().xor(id).bitLength()-1;
+        int bucketI = currentKey.xor(id).bitLength()-1;
         if (bucketI == -1)  {
-            return Arrays.asList(currentNode);
+            return null;
         }
         return kBuckets.get(bucketI);
     }
 
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Current Node: ");
-        builder.append(currentNode);
+        builder.append("Current key: ");
+        builder.append(currentKey);
         builder.append("\n");
         int i = 0;
         for (List<Node> bucket : kBuckets) {
