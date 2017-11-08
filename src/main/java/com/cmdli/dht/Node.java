@@ -31,6 +31,10 @@ public class Node {
         return "0x" + id.toString(16) + " " + address + ":" + port;
     }
 
+    public int hashCode() {
+        return id.hashCode();
+    }
+
     public boolean equals(Object other) {
         if (!(other instanceof Node))
             return false;

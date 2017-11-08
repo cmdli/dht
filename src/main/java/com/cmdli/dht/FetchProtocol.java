@@ -8,26 +8,8 @@ import java.io.*;
 
 import com.google.gson.*;
 
-import com.cmdli.dht.messages.Message;
-import com.cmdli.dht.DHT;
-import com.cmdli.dht.Connection;
-
-class GetRequest extends Message {
-    BigInteger key;
-    
-    public GetRequest(BigInteger key) {
-        super("GetRequest");
-        this.key = key;
-    }
-}
-
-class GetResponse extends Message {
-    List<Node> nodes;
-    public GetResponse(List<Node> nodes) {
-        super("GetResponse");
-        this.nodes = nodes;
-    }
-}
+import com.cmdli.dht.messages.*;
+import com.cmdli.dht.*;
 
 public class FetchProtocol {
 
