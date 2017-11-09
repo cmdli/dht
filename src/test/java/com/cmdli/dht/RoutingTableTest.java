@@ -26,19 +26,34 @@ public class RoutingTableTest {
 
     @Test
     public void testGetNodesNearID() {
+        // Test getting nodes out from the right bucket
         BigInteger currentKey = new BigInteger("0000",2);
+        for (long i = 1; i < 16; i *= 2) {
+            RoutingTable table = new RoutingTable(20, currentKey, 4);
+            for (long j = i; j < i*2; j++) {
+                table.addNode(new Node(BigInteger.valueOf(j), null, -1));
+            }
+            assertTrue("Bucket " + Long.toBinaryString(i) +
+                       " doesn't contain " + i + " node(s)",
+                       table.getNodesNearID(BigInteger.valueOf(i),20).size() == i);
+            if (i > 1) {
+                assertTrue("Bucket " + Long.toBinaryString(i/2) + " contains nodes",
+                           table.getNodesNearID(BigInteger.valueOf(i/2),20).size() == 0);
+            }
+        }
+
+        // Test the limit parameter
         RoutingTable table = new RoutingTable(20, currentKey, 4);
-        for (long i = 0; i < 16; i++) {
+        for (int i = 1; i < 4; i++) {
             table.addNode(new Node(BigInteger.valueOf(i), null, -1));
         }
-        assertTrue("First bucket doesn't contain 1 node",
-                   table.getNodesNearID(BigInteger.valueOf(1l),1).size() == 1);
-        assertTrue("Second bucket doesn't contain 2 nodes",
-                   table.getNodesNearID(BigInteger.valueOf(2l),2).size() == 2);
-        assertTrue("Third bucket doesn't contain 4 nodes",
-                   table.getNodesNearID(BigInteger.valueOf(4l),4).size() == 4);
-        assertTrue("Fourth bucket doesn't contain 8 nodes",
-                   table.getNodesNearID(BigInteger.valueOf(8l),8).size() == 8);
+        // Bucket 1 has 1 node, Bucket 2 has two nodes
+        assertTrue("Table did not limit reponse to 1",
+                   table.getNodesNearID(BigInteger.valueOf(1), 20).size() == 1);
+        assertTrue("Table did not limit response to 2",
+                   table.getNodesNearID(BigInteger.valueOf(2), 2).size() == 2);
+        assertTrue("Table did not give all nodes",
+                   table.getNodesNearID(BigInteger.valueOf(2), 3).size() == 3);
     }
     
 }

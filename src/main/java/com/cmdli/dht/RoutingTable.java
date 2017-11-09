@@ -38,15 +38,17 @@ public class RoutingTable {
     }
 
     public List<Node> getNodesNearID(BigInteger id, int limit) {
-        int bucketI = currentKey.xor(id).bitLength()-1;
-        if (bucketI == -1)  {
-            return null;
-        }
+        // Key: 0000
+        // 4: 1xxx
+        // 3: 01xx
+        // 2: 001x
+        // 1: 0001
         // TODO: worth limiting it to strictly limit?
-        List<Node> closestNodes = new ArrayList<>();
-        while (closestNodes.size() < limit && bucketI >= 0)
-            closestNodes.addAll(kBuckets.get(bucketI--));
-        return closestNodes;
+        return kBuckets.stream()
+            .flatMap(List::stream)
+            .sorted(n1, n2 -> n1.id().xor(id).compareTo(n2.id().xor(id)))
+            .limit(limit)
+            .collect(Collectors.toList());
     }
 
     public String toString() {
