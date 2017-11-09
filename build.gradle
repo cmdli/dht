@@ -8,6 +8,7 @@ repositories {
 
 dependencies {
     compile 'com.google.code.gson:gson:2.8.2'
+    testCompile 'junit:junit:4.12'
 }
 
 jar {
@@ -21,5 +22,11 @@ mainClassName = System.getProperty("exec.MainClass") ?: 'None'
 run {
     if (project.hasProperty("appArgs")) {
         args Eval.me(appArgs)
+    }
+}
+
+test {
+    testLogging {
+        showStandardStreams = true
     }
 }

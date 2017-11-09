@@ -3,6 +3,7 @@ package com.cmdli.dht;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.util.Objects;
 
 public class Node {
     private BigInteger id;
@@ -36,12 +37,14 @@ public class Node {
     }
 
     public boolean equals(Object other) {
+        if (other == null)
+            return false;
         if (!(other instanceof Node))
             return false;
         Node otherNode = (Node)other;
-        if (!otherNode.id.equals(this.id))
+        if (!Objects.equals(this.id, otherNode.id))
             return false;
-        if (!otherNode.address.equals(this.address))
+        if (!Objects.equals(this.address, otherNode.address))
             return false;
         if (otherNode.port != this.port)
             return false;
