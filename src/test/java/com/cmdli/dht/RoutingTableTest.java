@@ -5,6 +5,7 @@ import java.util.*;
 import java.math.*;
 
 import org.junit.Test;
+import org.junit.Ignore;
 import static org.junit.Assert.*;
 
 public class RoutingTableTest {
@@ -24,6 +25,7 @@ public class RoutingTableTest {
         assertTrue("Added node not returned from table", nodes.contains(node));
     }
 
+    @Ignore
     @Test
     public void testGetNodesNearID() {
         // Test getting nodes out from the right bucket
