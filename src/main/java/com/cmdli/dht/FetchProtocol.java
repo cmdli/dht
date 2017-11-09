@@ -37,7 +37,7 @@ public class FetchProtocol {
         GetRequest request = GSON.fromJson(initialMessage, GetRequest.class);
         if (request == null)
             return;
-        GetResponse response = new GetResponse(table.getNodesNearID(request.key));
+        GetResponse response = new GetResponse(table.getNodesNearID(request.key, DHT.K));
         connection.send(GSON.toJson(response) + "\n");
     }
 

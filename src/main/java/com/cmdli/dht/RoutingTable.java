@@ -37,12 +37,16 @@ public class RoutingTable {
         }
     }
 
-    public List<Node> getNodesNearID(BigInteger id) {
+    public List<Node> getNodesNearID(BigInteger id, int limit) {
         int bucketI = currentKey.xor(id).bitLength()-1;
         if (bucketI == -1)  {
             return null;
         }
-        return kBuckets.get(bucketI);
+        // TODO: worth limiting it to strictly limit?
+        List<Node> closestNodes = new ArrayList<>();
+        while (closestNodes.size() < limit && bucketI >= 0)
+            closestNodes.addAll(kBuckets.get(bucketI--));
+        return closestNodes;
     }
 
     public String toString() {

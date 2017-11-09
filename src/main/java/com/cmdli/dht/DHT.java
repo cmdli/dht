@@ -111,8 +111,9 @@ public class DHT {
         PriorityQueue<Node> closestNodes = new PriorityQueue<Node>(MAX_FETCH_NODE_SET_SIZE, closeToFar.reversed());
         // Next nodes to query
         PriorityQueue<Node> nodesToProcess = new PriorityQueue<Node>(MAX_FETCH_NODE_SET_SIZE, closeToFar);
-        nodesToProcess.addAll(routingTable.getNodesNearID(key));
+        nodesToProcess.addAll(routingTable.getNodesNearID(key, K));
         closestNodes.addAll(nodesToProcess);
+        System.out.println("Starting nodes: " + nodesToProcess);
         HashSet<Node> visitedNodes = new HashSet<Node>(nodesToProcess);
         int nodesProcessed = 0;
         while (!nodesToProcess.isEmpty()) {
@@ -121,11 +122,10 @@ public class DHT {
             System.out.println("Processing: " + nextNode);
             List<Node> fetchedNodes = new FetchProtocol().fetch(key, nextNode);
             if (fetchedNodes != null) {
-                
                 List<Node> newNodes = fetchedNodes.stream()
                     .filter(n -> !visitedNodes.contains(n))
                     .collect(Collectors.toList());
-                System.out.println("Adding: " + newNodes);
+                System.out.println("Adding: " + newNodes + " - " + (fetchedNodes.size() - newNodes.size()) + " skipped");
                 closestNodes.addAll(newNodes);
                 visitedNodes.addAll(newNodes);
                 nodesToProcess.addAll(newNodes);
@@ -133,6 +133,7 @@ public class DHT {
                     closestNodes.poll();
                 while (nodesToProcess.size() > MAX_FETCH_NODE_SET_SIZE)
                     nodesToProcess.poll();
+                System.out.println("New node set: " + nodesToProcess);
             }
         }
         System.out.println("Nodes processed: " + nodesProcessed);
@@ -151,18 +152,23 @@ public class DHT {
     }
 
     public static void main(String[] args) {
+        List<Node> nodes = new ArrayList<>();
         List<DHT> clients = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             DHT newDHT = new DHT();
             newDHT.startServer(0);
-            System.out.println(newDHT.currentNode());
             clients.add(newDHT);
         }
         for (DHT client1 : clients) {
+            nodes.add(client1.currentNode());
             for (DHT client2 : clients) {
                 client1.addNode(client2.currentNode());
             }
         }
+        BigInteger key = DHT.randomID(DHT.ID_LENGTH);
+        System.out.println("Key: 0x" + key.toString(16));
+        Collections.sort(nodes, (n1, n2) -> (n1.id().xor(key).compareTo(n2.id().xor(key))));
+        System.out.println("Nodes: " + nodes);
         DHT dht = clients.get(0);
         dht.get(DHT.randomID(DHT.ID_LENGTH));
         System.out.print("Stopping servers... ");
