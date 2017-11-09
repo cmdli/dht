@@ -107,14 +107,15 @@ public class DHT {
     public String get(BigInteger key) {
         System.out.println("Fetching: 0x" + key.toString(16));
         Comparator<Node> closeToFar = (Node n1, Node n2) -> n1.id().xor(key).compareTo(n2.id().xor(key));
-        // Closest nodes found so far
+        // Closest nodes found so far - ordered from farthest to closest
         PriorityQueue<Node> closestNodes = new PriorityQueue<Node>(MAX_FETCH_NODE_SET_SIZE, closeToFar.reversed());
-        // Next nodes to query
+        // Next nodes to query - ordered from closest to farthest
         PriorityQueue<Node> nodesToProcess = new PriorityQueue<Node>(MAX_FETCH_NODE_SET_SIZE, closeToFar);
         nodesToProcess.addAll(routingTable.getNodesNearID(key, K));
         closestNodes.addAll(nodesToProcess);
-        System.out.println("Starting nodes: " + nodesToProcess);
         HashSet<Node> visitedNodes = new HashSet<Node>(nodesToProcess);
+        
+        System.out.println("Starting nodes: " + nodesToProcess);
         int nodesProcessed = 0;
         while (!nodesToProcess.isEmpty()) {
             Node nextNode = nodesToProcess.poll();
@@ -122,17 +123,24 @@ public class DHT {
             System.out.println("Processing: " + nextNode);
             List<Node> fetchedNodes = new FetchProtocol().fetch(key, nextNode);
             if (fetchedNodes != null) {
+                // Get unvisited nodes from response
                 List<Node> newNodes = fetchedNodes.stream()
                     .filter(n -> !visitedNodes.contains(n))
                     .collect(Collectors.toList());
-                System.out.println("Adding: " + newNodes + " - " + (fetchedNodes.size() - newNodes.size()) + " skipped");
-                closestNodes.addAll(newNodes);
                 visitedNodes.addAll(newNodes);
-                nodesToProcess.addAll(newNodes);
+                
+                // Merge new nodes into node set
+                closestNodes.addAll(newNodes);
                 while (closestNodes.size() > MAX_FETCH_NODE_SET_SIZE)
                     closestNodes.poll();
-                while (nodesToProcess.size() > MAX_FETCH_NODE_SET_SIZE)
-                    nodesToProcess.poll();
+                
+                // Query the newly added nodes
+                List<Node> addedNodes = newNodes.stream()
+                    .filter(n -> closestNodes.contains(n))
+                    .collect(Collectors.toList());
+                nodesToProcess.addAll(addedNodes);
+                
+                System.out.println("Added: " + addedNodes + " - " + (fetchedNodes.size() - addedNodes.size()) + " skipped");
                 System.out.println("New node set: " + nodesToProcess);
             }
         }

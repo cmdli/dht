@@ -8,6 +8,7 @@ import com.cmdli.dht.messages.Message;
 
 public class GetResponse extends Message {
     public List<Node> nodes;
+    public String value;
     public GetResponse(List<Node> nodes) {
         super("GetResponse");
         this.nodes = nodes;
