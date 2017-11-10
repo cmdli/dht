@@ -10,10 +10,8 @@ import java.io.*;
 
 import com.google.gson.*;
 
-import com.cmdli.dht.Node;
-import com.cmdli.dht.RoutingTable;
-import com.cmdli.dht.FetchProtocol;
-import com.cmdli.dht.messages.Message;
+import com.cmdli.dht.*;
+import com.cmdli.dht.messages.*;
 
 public class DHT {
 
@@ -22,6 +20,8 @@ public class DHT {
 
     private Node currentNode;
     private RoutingTable routingTable;
+    private HashMap<String, String> storage;
+    
     private ServerSocket serverSocket;
     private volatile boolean serverRunning;
     private Thread serverThread;
@@ -29,6 +29,7 @@ public class DHT {
     public DHT() {
         this.currentNode = new Node(DHT.randomID(ID_LENGTH), null, -1);
         this.routingTable = new RoutingTable(K, currentNode.id(), ID_LENGTH);
+        this.storage = new HashMap<>();
     }
 
     // Getters and Setters
@@ -92,7 +93,7 @@ public class DHT {
                 Message message = gson.fromJson(initialMessage, Message.class);
                 switch (message.type) {
                 case "GetRequest":
-                    new FetchProtocol(routingTable).respond(conn, initialMessage);
+                    new FetchProtocol(routingTable, storage).respond(conn, initialMessage);
                     break;
                 }
             } catch (IOException e) {
@@ -113,21 +114,26 @@ public class DHT {
         PriorityQueue<Node> nodesToProcess = new PriorityQueue<Node>(MAX_FETCH_NODE_SET_SIZE, closeToFar);
         nodesToProcess.addAll(routingTable.getNodesNearID(key, K));
         closestNodes.addAll(nodesToProcess);
-        HashSet<Node> visitedNodes = new HashSet<Node>(nodesToProcess);
+        HashSet<Node> processedNodes = new HashSet<Node>(nodesToProcess);
         
         System.out.println("Starting nodes: " + nodesToProcess);
         int nodesProcessed = 0;
+        String value = null;
         while (!nodesToProcess.isEmpty()) {
             Node nextNode = nodesToProcess.poll();
             nodesProcessed++;
             System.out.println("Processing: " + nextNode);
-            List<Node> fetchedNodes = new FetchProtocol().fetch(key, nextNode);
-            if (fetchedNodes != null) {
-                // Get unvisited nodes from response
+            GetResponse fetchResponse = new FetchProtocol().fetch(key, nextNode);
+            if (fetchResponse.value != null) {
+                value = fetchResponse.value;
+                break;
+            } else if (fetchResponse.nodes != null) {
+                List<Node> fetchedNodes = fetchResponse.nodes;
+                // Get unprocessed nodes from response
                 List<Node> newNodes = fetchedNodes.stream()
-                    .filter(n -> !visitedNodes.contains(n))
+                    .filter(n -> !processedNodes.contains(n))
                     .collect(Collectors.toList());
-                visitedNodes.addAll(newNodes);
+                processedNodes.addAll(newNodes);
                 
                 // Merge new nodes into node set
                 closestNodes.addAll(newNodes);
@@ -145,7 +151,7 @@ public class DHT {
             }
         }
         System.out.println("Nodes processed: " + nodesProcessed);
-        return "None";
+        return value;
     }
 
     public void put(BigInteger key, String value) {

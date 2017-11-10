@@ -16,28 +16,32 @@ public class FetchProtocol {
     public static final Gson GSON = new Gson();
     
     private RoutingTable table;
+    private HashMap<String,String> storage;
 
     public FetchProtocol() {
-        this(null);
+        this(null, null);
     }
     
-    public FetchProtocol(RoutingTable table) {
+    public FetchProtocol(RoutingTable table, HashMap<String, String> storage) {
         this.table = table;
+        this.storage = storage;
     }
     
-    public List<Node> fetch(BigInteger key, Node node) {
+    public GetResponse fetch(BigInteger key, Node node) {
         Connection connection = new Connection().connect(node);
         connection.send(GSON.toJson(new GetRequest(key)) + "\n");
         GetResponse response = GSON.fromJson(connection.receive(), GetResponse.class);
         connection.close();
-        return response != null ? response.nodes : null;
+        return response;
     }
 
     public void respond(Connection connection, String initialMessage) {
         GetRequest request = GSON.fromJson(initialMessage, GetRequest.class);
         if (request == null)
             return;
-        GetResponse response = new GetResponse(table.getNodesNearID(request.key, DHT.K));
+        List<Node> nodes = table.getNodesNearID(request.key, DHT.K);
+        String value = storage.get(request.key.toString(16));
+        GetResponse response = new GetResponse(nodes,value);
         connection.send(GSON.toJson(response) + "\n");
     }
 
@@ -61,7 +65,7 @@ public class FetchProtocol {
                                           connection.address(),
                                           connection.port());
                         String initialMessage = connection.receive();
-                        FetchProtocol serverProtocol = new FetchProtocol(table);
+                        FetchProtocol serverProtocol = new FetchProtocol(table, new HashMap<>());
                         serverProtocol.respond(connection, initialMessage);
                     }
                 }
