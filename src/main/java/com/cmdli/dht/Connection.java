@@ -18,9 +18,6 @@ public class Connection implements Closeable {
     
     public Connection(Socket socket) {
         this.socket = socket;
-        //        if (socket != null) {
-        //            this.socket.setTcpNoDelay(true);
-        //        }
     }
 
     public Connection connect(Node node) {

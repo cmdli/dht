@@ -104,8 +104,17 @@ public class DHT {
 
     // Get and Put
 
+    class SearchResult {
+        List<Node> nodes;
+        String value;
+        public SearchResult(Collection<Node> nodes, String value) {
+            this.nodes = new ArrayList<>(nodes);
+            this.value = value;
+        }
+    }
+    
     final static int MAX_FETCH_NODE_SET_SIZE = 20; // Size of closest nodes set when fetching
-    public String get(BigInteger key) {
+    public SearchResult search(BigInteger key, boolean getValue) {
         System.out.println("Fetching: 0x" + key.toString(16));
         Comparator<Node> closeToFar = (Node n1, Node n2) -> n1.id().xor(key).compareTo(n2.id().xor(key));
         // Closest nodes found so far - ordered from farthest to closest
@@ -123,12 +132,19 @@ public class DHT {
             Node nextNode = nodesToProcess.poll();
             nodesProcessed++;
             System.out.println("Processing: " + nextNode);
-            GetResponse fetchResponse = new FetchProtocol().fetch(key, nextNode);
-            if (fetchResponse.value != null) {
-                value = fetchResponse.value;
-                break;
-            } else if (fetchResponse.nodes != null) {
-                List<Node> fetchedNodes = fetchResponse.nodes;
+            List<Node> fetchedNodes = null;
+            if (getValue) {
+                GetResponse fetchResponse = new FetchProtocol().fetch(key, nextNode);
+                if (fetchResponse.value != null) {
+                    value = fetchResponse.value;
+                    break;
+                }
+                fetchedNodes = fetchResponse.nodes;
+            } else {
+                FindNodeResponse response = new FindNodeProtocol().fetch(key, nextNode);
+                fetchedNodes = response.nodes;
+            }
+            if (fetchedNodes != null) {
                 // Get unprocessed nodes from response
                 List<Node> newNodes = fetchedNodes.stream()
                     .filter(n -> !processedNodes.contains(n))
@@ -151,11 +167,18 @@ public class DHT {
             }
         }
         System.out.println("Nodes processed: " + nodesProcessed);
-        return value;
+        return new SearchResult(closestNodes, value);
+    }
+
+    public String get(BigInteger key) {
+        SearchResult result = search(key, true);
+        return result.value;
     }
 
     public void put(BigInteger key, String value) {
-        
+        // Find closest nodes
+        // Put key:value in those nodes
+        SearchResult result = search(key, false);
     }
 
     // -------------------------------­-----------
