@@ -64,7 +64,7 @@ public class RoutingTableTest {
     }
 
     @Test
-    public void testTableBucketLimit() {
+    public void testTableKLimit() {
         BigInteger currentKey = new BigInteger("0000", 2);
         RoutingTable table = new RoutingTable(5, currentKey, 4);
         for (int i = 8; i < 16; i++) {
