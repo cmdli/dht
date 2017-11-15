@@ -171,8 +171,10 @@ public class DHT {
                     .collect(Collectors.toList());
                 nodesToProcess.addAll(addedNodes);
                 
-                //                System.out.println("Added: " + addedNodes + " - " + (fetchedNodes.size() - addedNodes.size()) + " skipped");
-                //                System.out.println("New node set: " + nodesToProcess);
+                System.out.println("Added: " + addedNodes + " - " +
+                                   (fetchedNodes.size() - addedNodes.size()) +
+                                   " skipped");
+                System.out.println("New node set: " + nodesToProcess);
             }
         }
         System.out.println("Nodes processed: " + nodesProcessed);

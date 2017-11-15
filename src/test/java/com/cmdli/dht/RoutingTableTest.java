@@ -2,6 +2,7 @@
 package com.cmdli.dht;
 
 import java.util.*;
+import java.util.stream.*;
 import java.math.*;
 
 import org.junit.Test;
@@ -12,6 +13,18 @@ public class RoutingTableTest {
 
     public static Node createNode(String hexString) {
         return new Node(new BigInteger(hexString, 2), null, -1);
+    }
+
+    public static Node createNode(long key) {
+        return new Node(BigInteger.valueOf(key), null, -1);
+    }
+
+    public static <T> Set<T> set(Collection<T> items) {
+        return new HashSet<T>(items);
+    }
+    
+    public static <T> Set<T> set(T... items) {
+        return new HashSet<T>(Arrays.asList(items));
     }
     
     @Test
@@ -25,37 +38,43 @@ public class RoutingTableTest {
         assertTrue("Added node not returned from table", nodes.contains(node));
     }
 
-    @Ignore
     @Test
     public void testGetNodesNearID() {
-        // Test getting nodes out from the right bucket
-        BigInteger currentKey = new BigInteger("0000",2);
-        for (long i = 1; i < 16; i *= 2) {
-            RoutingTable table = new RoutingTable(20, currentKey, 4);
-            for (long j = i; j < i*2; j++) {
-                table.addNode(new Node(BigInteger.valueOf(j), null, -1));
-            }
-            assertTrue("Bucket " + Long.toBinaryString(i) +
-                       " doesn't contain " + i + " node(s)",
-                       table.getNodesNearID(BigInteger.valueOf(i),20).size() == i);
-            if (i > 1) {
-                assertTrue("Bucket " + Long.toBinaryString(i/2) + " contains nodes",
-                           table.getNodesNearID(BigInteger.valueOf(i/2),20).size() == 0);
-            }
+        BigInteger currentKey = new BigInteger("0000", 2);
+        RoutingTable table = new RoutingTable(20, currentKey, 4);
+        for (int i = 0; i < 16; i++) {
+            table.addNode(createNode(i));
         }
+        Set<Node> nodes = set(table.getNodesNearID(BigInteger.valueOf(5), 3));
+        assertEquals(nodes.size(), 3);
+        assertEquals(nodes, set(createNode(5), createNode(7), createNode(4)));
+    }
 
-        // Test the limit parameter
+    @Test
+    public void testGetNodesLimit() {
+        BigInteger currentKey = new BigInteger("0000", 2);
         RoutingTable table = new RoutingTable(20, currentKey, 4);
         for (int i = 1; i < 4; i++) {
-            table.addNode(new Node(BigInteger.valueOf(i), null, -1));
+            table.addNode(createNode(i));
         }
-        // Bucket 1 has 1 node, Bucket 2 has two nodes
-        assertTrue("Table did not limit reponse to 1",
-                   table.getNodesNearID(BigInteger.valueOf(1), 20).size() == 1);
-        assertTrue("Table did not limit response to 2",
-                   table.getNodesNearID(BigInteger.valueOf(2), 2).size() == 2);
-        assertTrue("Table did not give all nodes",
-                   table.getNodesNearID(BigInteger.valueOf(2), 3).size() == 3);
+        List<Node> nodes = table.getNodesNearID(BigInteger.valueOf(2), 2);
+        assertEquals(nodes.size(), 2);
+        nodes = table.getNodesNearID(BigInteger.valueOf(2), 3);
+        assertEquals(nodes.size(), 3);
+    }
+
+    @Test
+    public void testTableBucketLimit() {
+        BigInteger currentKey = new BigInteger("0000", 2);
+        RoutingTable table = new RoutingTable(5, currentKey, 4);
+        for (int i = 8; i < 16; i++) {
+            table.addNode(createNode(i));
+        }
+        // Bucket 4 should have 5 nodes only
+        Set<Node> nodes = set(table.getNodesNearID(BigInteger.valueOf(15), 20));
+        assertEquals(nodes.size(), 5);
+        assertEquals(nodes, set(createNode(8),createNode(9),createNode(10),
+                                createNode(11),createNode(12)));
     }
     
 }
