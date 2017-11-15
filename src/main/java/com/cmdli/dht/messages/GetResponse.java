@@ -12,5 +12,6 @@ public class GetResponse extends Message {
     public GetResponse(List<Node> nodes, String value) {
         super("GetResponse");
         this.nodes = nodes;
+        this.value = value;
     }
 }

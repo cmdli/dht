@@ -1,5 +1,5 @@
 
-package com.cmdli.dht;
+package com.cmdli.dht.protocols;
 
 import java.util.*;
 import java.math.BigInteger;

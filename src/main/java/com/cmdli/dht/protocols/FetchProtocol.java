@@ -1,5 +1,5 @@
 
-package com.cmdli.dht;
+package com.cmdli.dht.protocols;
 
 import java.util.*;
 import java.math.BigInteger;
@@ -41,6 +41,7 @@ public class FetchProtocol {
             return;
         List<Node> nodes = table.getNodesNearID(request.key, DHT.K);
         String value = storage.get(request.key.toString(16));
+        System.out.println("Value: " + value);
         GetResponse response = new GetResponse(nodes,value);
         connection.send(GSON.toJson(response) + "\n");
     }

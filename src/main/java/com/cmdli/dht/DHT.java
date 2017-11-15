@@ -12,9 +12,11 @@ import com.google.gson.*;
 
 import com.cmdli.dht.*;
 import com.cmdli.dht.messages.*;
+import com.cmdli.dht.protocols.*;
 
 public class DHT {
 
+    public static final Gson GSON = new Gson();
     public static final int K = 20;
     public static final int ID_LENGTH = 20;
 
@@ -95,9 +97,16 @@ public class DHT {
                 case "GetRequest":
                     new FetchProtocol(routingTable, storage).respond(conn, initialMessage);
                     break;
+                case "FindNodeRequest":
+                    new FindNodeProtocol(routingTable).respond(conn, initialMessage);
+                    break;
+                case "PutRequest":
+                    System.out.printf("Adding to node %s\n", currentNode);
+                    new PutProtocol(storage).receive(conn, initialMessage);
+                    break;
                 }
             } catch (IOException e) {
-                //                System.err.println(e);
+                // Main thread closed the socket
             }
         }
     }
@@ -107,8 +116,8 @@ public class DHT {
     class SearchResult {
         List<Node> nodes;
         String value;
-        public SearchResult(Collection<Node> nodes, String value) {
-            this.nodes = new ArrayList<>(nodes);
+        public SearchResult(List<Node> nodes, String value) {
+            this.nodes = nodes;
             this.value = value;
         }
     }
@@ -162,12 +171,12 @@ public class DHT {
                     .collect(Collectors.toList());
                 nodesToProcess.addAll(addedNodes);
                 
-                System.out.println("Added: " + addedNodes + " - " + (fetchedNodes.size() - addedNodes.size()) + " skipped");
-                System.out.println("New node set: " + nodesToProcess);
+                //                System.out.println("Added: " + addedNodes + " - " + (fetchedNodes.size() - addedNodes.size()) + " skipped");
+                //                System.out.println("New node set: " + nodesToProcess);
             }
         }
         System.out.println("Nodes processed: " + nodesProcessed);
-        return new SearchResult(closestNodes, value);
+        return new SearchResult(new ArrayList<>(closestNodes), value);
     }
 
     public String get(BigInteger key) {
@@ -179,6 +188,9 @@ public class DHT {
         // Find closest nodes
         // Put key:value in those nodes
         SearchResult result = search(key, false);
+        for (Node node : result.nodes) {
+            new PutProtocol().put(key, value, node);
+        }
     }
 
     // -------------------------------­-----------
@@ -188,7 +200,7 @@ public class DHT {
         return new BigInteger(numBits, random);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         List<Node> nodes = new ArrayList<>();
         List<DHT> clients = new ArrayList<>();
         for (int i = 0; i < 1000; i++) {
@@ -207,7 +219,10 @@ public class DHT {
         Collections.sort(nodes, (n1, n2) -> (n1.id().xor(key).compareTo(n2.id().xor(key))));
         System.out.println("Nodes: " + nodes);
         DHT dht = clients.get(0);
-        dht.get(DHT.randomID(DHT.ID_LENGTH));
+        dht.put(key,"value");
+        Thread.sleep(500);
+        System.out.println("Fetch result: " + dht.get(key));
+        
         System.out.print("Stopping servers... ");
         for (DHT client : clients) {
             client.stopServer();
