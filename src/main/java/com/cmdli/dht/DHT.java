@@ -91,19 +91,22 @@ public class DHT {
             try (
                  Connection conn = new Connection(serverSocket.accept());
                  ) {
-                String initialMessage = conn.receive();
-                Message message = gson.fromJson(initialMessage, Message.class);
-                switch (message.type) {
-                case "GetRequest":
-                    new FetchProtocol(routingTable, storage).respond(conn, initialMessage);
-                    break;
-                case "FindNodeRequest":
-                    new FindNodeProtocol(routingTable).respond(conn, initialMessage);
-                    break;
-                case "PutRequest":
-                    System.out.printf("Adding to node %s\n", currentNode);
-                    new PutProtocol(storage).receive(conn, initialMessage);
-                    break;
+                String messageJson = conn.receive();
+                Message message = gson.fromJson(messageJson, Message.class);
+                if (message != null) {
+                    switch (message.type) {
+                    case "GetRequest":
+                        new FetchProtocol(conn, routingTable, storage)
+                            .respond(message);
+                        break;
+                    case "FindNodeRequest":
+                        new FindNodeProtocol(conn, routingTable).respond(message);
+                        break;
+                    case "PutRequest":
+                        System.out.printf("Adding to node %s\n", currentNode);
+                        new PutProtocol(conn, storage).receive(message);
+                        break;
+                    }
                 }
             } catch (IOException e) {
                 // Main thread closed the socket
@@ -142,16 +145,20 @@ public class DHT {
             nodesProcessed++;
             System.out.println("Processing: " + nextNode);
             List<Node> fetchedNodes = null;
-            if (getValue) {
-                GetResponse fetchResponse = new FetchProtocol().fetch(key, nextNode);
-                if (fetchResponse.value != null) {
-                    value = fetchResponse.value;
-                    break;
+            try (
+                 Connection conn = new Connection().connect(nextNode);
+                 ) {
+                if (getValue) {
+                    GetResponse fetchResponse = new FetchProtocol(conn).fetch(key);
+                    if (fetchResponse.value != null) {
+                        value = fetchResponse.value;
+                        break;
+                    }
+                    fetchedNodes = fetchResponse.nodes;
+                } else {
+                    FindNodeResponse response = new FindNodeProtocol(conn).fetch(key);
+                    fetchedNodes = response.nodes;
                 }
-                fetchedNodes = fetchResponse.nodes;
-            } else {
-                FindNodeResponse response = new FindNodeProtocol().fetch(key, nextNode);
-                fetchedNodes = response.nodes;
             }
             if (fetchedNodes != null) {
                 // Get unprocessed nodes from response
@@ -191,7 +198,11 @@ public class DHT {
         // Put key:value in those nodes
         SearchResult result = search(key, false);
         for (Node node : result.nodes) {
-            new PutProtocol().put(key, value, node);
+            try (
+                 Connection conn = new Connection().connect(node);
+                 ) {
+                new PutProtocol(conn).put(key, value);
+            }
         }
     }
 

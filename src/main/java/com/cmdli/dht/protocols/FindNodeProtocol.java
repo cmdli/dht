@@ -12,29 +12,28 @@ import com.cmdli.dht.messages.*;
 public class FindNodeProtocol {
 
     private static final Gson GSON = new Gson();
-    
+
+    private Connection conn;
     private RoutingTable table;
 
-    public FindNodeProtocol() {
-        this(null);
+    public FindNodeProtocol(Connection conn) {
+        this(conn, null);
     }
     
-    public FindNodeProtocol(RoutingTable table) {
+    public FindNodeProtocol(Connection conn, RoutingTable table) {
+        this.conn = conn;
         this.table = table;
     }
 
-    public FindNodeResponse fetch(BigInteger key, Node node) {
-        Connection conn = new Connection().connect(node);
+    public FindNodeResponse fetch(BigInteger key) {
         conn.send(GSON.toJson(new FindNodeRequest(key)) + "\n");
-        FindNodeResponse response = GSON.fromJson(conn.receive(), FindNodeResponse.class);
-        conn.close();
-        return response;
+        return GSON.fromJson(conn.receive(), FindNodeResponse.class);
     }
 
-    public void respond(Connection conn, String initialMessage) {
-        FindNodeRequest request = GSON.fromJson(initialMessage, FindNodeRequest.class);
-        if (request == null)
+    public void respond(Message message) {
+        if (!(message instanceof FindNodeRequest))
             return;
+        FindNodeRequest request = (FindNodeRequest)message;
         List<Node> nodes = table.getNodesNearID(request.key, DHT.K);
         conn.send(GSON.toJson(new FindNodeResponse(nodes)) + "\n");
     }

@@ -13,27 +13,27 @@ public class PutProtocol {
 
     public static final Gson GSON = new Gson();
 
+    private Connection conn;
     private HashMap<String,String> storage;
 
-    public PutProtocol() {
-        this(null);
+    public PutProtocol(Connection conn) {
+        this(conn, null);
     }
     
-    public PutProtocol(HashMap<String,String> storage) {
+    public PutProtocol(Connection conn, HashMap<String,String> storage) {
+        this.conn = conn;
         this.storage = storage;
     }
 
-    public void put(BigInteger key, String value, Node node) {
-        Connection conn = new Connection().connect(node);
+    public void put(BigInteger key, String value) {
         conn.send(GSON.toJson(new PutRequest(key.toString(16),value)));
-        conn.close();
     }
 
-    public void receive(Connection conn, String initialMessage) {
-        PutRequest request = GSON.fromJson(initialMessage, PutRequest.class);
-        if (request != null) {
-            System.out.println("Putting " + request.key + ":" + request.value);
-            storage.put(request.key, request.value);
-        }
+    public void receive(Message message) {
+        if (!(message instanceof PutRequest))
+            return;
+        PutRequest request = (PutRequest)message;
+        System.out.println("Putting " + request.key + ":" + request.value);
+        storage.put(request.key, request.value);
     }
 }
