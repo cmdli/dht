@@ -14,13 +14,13 @@ public class PutProtocol {
     public static final Gson GSON = new Gson();
 
     private Connection conn;
-    private HashMap<String,String> storage;
+    private Map<String,String> storage;
 
     public PutProtocol(Connection conn) {
         this(conn, null);
     }
     
-    public PutProtocol(Connection conn, HashMap<String,String> storage) {
+    public PutProtocol(Connection conn, Map<String,String> storage) {
         this.conn = conn;
         this.storage = storage;
     }

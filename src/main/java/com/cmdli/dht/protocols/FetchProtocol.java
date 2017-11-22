@@ -16,7 +16,7 @@ public class FetchProtocol {
     public static final Gson GSON = new Gson();
     
     private RoutingTable table;
-    private HashMap<String,String> storage;
+    private Map<String,String> storage;
     private Connection conn;
 
     public FetchProtocol(Connection conn) {
@@ -25,7 +25,7 @@ public class FetchProtocol {
     
     public FetchProtocol(Connection conn,
                          RoutingTable table,
-                         HashMap<String, String> storage) {
+                         Map<String, String> storage) {
         this.conn = conn;
         this.table = table;
         this.storage = storage;
