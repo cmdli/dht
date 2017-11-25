@@ -72,20 +72,19 @@ public class Server {
             try (
                  Connection conn = new Connection(serverSocket.accept());
                  ) {
-                String messageJson = conn.receive();
-                Message message = gson.fromJson(messageJson, Message.class);
+                String json = conn.receive();
+                Message message = gson.fromJson(json, Message.class);
                 if (message != null) {
                     switch (message.type) {
                     case "GetRequest":
-                        new FetchProtocol(conn, table, storage)
-                            .respond(message);
+                        new FetchProtocol(conn, table, storage).respond(json);
                         break;
                     case "FindNodeRequest":
-                        new FindNodeProtocol(conn, table).respond(message);
+                        new FindNodeProtocol(conn, table).respond(json);
                         break;
                     case "PutRequest":
                         System.out.printf("Adding to node %s\n", currentNode);
-                        new PutProtocol(conn, storage).receive(message);
+                        new PutProtocol(conn, storage).receive(json);
                         break;
                     }
                 }

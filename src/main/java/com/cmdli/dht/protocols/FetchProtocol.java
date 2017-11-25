@@ -37,10 +37,10 @@ public class FetchProtocol {
         return response;
     }
 
-    public void respond(Message message) {
-        if (!(message instanceof GetRequest))
+    public void respond(String json) {
+        GetRequest request = GSON.fromJson(json, GetRequest.class);
+        if (request == null)
             return;
-        GetRequest request = (GetRequest)message;
         List<Node> nodes = table.getNodesNearID(request.key, DHT.K);
         String value = storage.get(request.key.toString(16));
         conn.send(GSON.toJson(new GetResponse(nodes,value)) + "\n");

@@ -30,10 +30,10 @@ public class FindNodeProtocol {
         return GSON.fromJson(conn.receive(), FindNodeResponse.class);
     }
 
-    public void respond(Message message) {
-        if (!(message instanceof FindNodeRequest))
+    public void respond(String json) {
+        FindNodeRequest request = GSON.fromJson(json, FindNodeRequest.class);
+        if (request == null)
             return;
-        FindNodeRequest request = (FindNodeRequest)message;
         List<Node> nodes = table.getNodesNearID(request.key, DHT.K);
         conn.send(GSON.toJson(new FindNodeResponse(nodes)) + "\n");
     }

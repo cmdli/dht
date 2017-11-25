@@ -72,7 +72,7 @@ public class Search {
                 System.out.println("Added: " + addedNodes + " - " +
                                    (fetchedNodes.size() - addedNodes.size()) +
                                    " skipped");
-                System.out.println("New node set: " + nodesToProcess);
+                //System.out.println("New node set: " + nodesToProcess);
             }
         }
         System.out.println("Nodes processed: " + nodesProcessed);
@@ -93,6 +93,8 @@ public class Search {
                 if (response != null)
                     return new SearchResult(response.nodes, null);
             }
+        } catch (Exception e) {
+            System.out.println(e);
         }
         return new SearchResult(null,null);
     }

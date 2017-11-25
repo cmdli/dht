@@ -29,10 +29,10 @@ public class PutProtocol {
         conn.send(GSON.toJson(new PutRequest(key.toString(16),value)));
     }
 
-    public void receive(Message message) {
-        if (!(message instanceof PutRequest))
+    public void receive(String json) {
+        PutRequest request = GSON.fromJson(json, PutRequest.class);
+        if (request == null)
             return;
-        PutRequest request = (PutRequest)message;
         System.out.println("Putting " + request.key + ":" + request.value);
         storage.put(request.key, request.value);
     }
