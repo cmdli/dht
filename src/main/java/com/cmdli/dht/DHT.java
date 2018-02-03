@@ -41,13 +41,9 @@ public class DHT {
         routingTable.addNode(node);
     }
 
+    @Override
     public String toString() {
-        return new StringBuilder()
-            .append("Current Node: ")
-            .append(currentNode)
-            .append("\n")
-            .append(routingTable)
-            .toString();
+        return "Current Node: " + currentNode + "\n" + routingTable;
     }
 
     // Server
@@ -77,7 +73,7 @@ public class DHT {
         SearchResult result = new Search(routingTable, key, false).search();
         for (Node node : result.nodes) {
             try (
-                 Connection conn = new Connection().connect(node);
+                 Connection conn = new Connection().connect(node)
                  ) {
                 new PutProtocol(conn).put(key, value);
             }
@@ -107,7 +103,7 @@ public class DHT {
         }
         BigInteger key = DHT.randomID(DHT.ID_LENGTH);
         System.out.println("Key: 0x" + key.toString(16));
-        Collections.sort(nodes, (n1, n2) -> (n1.id().xor(key).compareTo(n2.id().xor(key))));
+        nodes.sort((n1, n2) -> (n1.id().xor(key).compareTo(n2.id().xor(key))));
         System.out.println("Nodes: " + nodes);
         DHT dht = clients.get(0);
         dht.put(key,"value");

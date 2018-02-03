@@ -28,55 +28,23 @@ public class Search {
     public SearchResult search() {
         if (result != null)
             return result;
-        System.out.println("Fetching: 0x" + key.toString(16));
-        Comparator<Node> closeToFar = (Node n1, Node n2) -> n1.id().xor(key).compareTo(n2.id().xor(key));
-        // Closest nodes found so far - ordered from farthest to closest
-        PriorityQueue<Node> closestNodes = new PriorityQueue<>(MAX_FETCH_NODE_SET_SIZE, closeToFar.reversed());
-        // Next nodes to query - ordered from closest to farthest
-        PriorityQueue<Node> nodesToProcess = new PriorityQueue<>(MAX_FETCH_NODE_SET_SIZE, closeToFar);
-        nodesToProcess.addAll(routingTable.getNodesNearID(key, DHT.K));
-        closestNodes.addAll(nodesToProcess);
-        HashSet<Node> processedNodes = new HashSet<>(nodesToProcess);
-        
-        System.out.println("Starting nodes: " + nodesToProcess);
-        int nodesProcessed = 0;
         String value = null;
-        while (!nodesToProcess.isEmpty()) {
-            Node nextNode = nodesToProcess.poll();
-            nodesProcessed++;
-            System.out.println("Processing: " + nextNode);
-            SearchResult queryResult = queryNode(nextNode);
-            if (queryResult.value != null) {
-                value = queryResult.value;
+        Set<Node> nodes = new HashSet<>(routingTable.getNodesNearID(key, DHT.K));
+        while (!nodes.isEmpty()) {
+            Set<Node> newNodes = new HashSet<>();
+            for (Node node : nodes) {
+                SearchResult queryResult = queryNode(node);
+                if (queryResult.value != null) {
+                    value = queryResult.value;
+                    break;
+                }
+                newNodes.addAll(queryResult.nodes);
+            }
+            if (value != null)
                 break;
-            }
-            List<Node> fetchedNodes = queryResult.nodes;
-            if (fetchedNodes != null) {
-                // Get unprocessed nodes from response
-                List<Node> newNodes = fetchedNodes.stream()
-                    .filter(n -> !processedNodes.contains(n))
-                    .collect(Collectors.toList());
-                processedNodes.addAll(newNodes);
-                
-                // Merge new nodes into node set
-                closestNodes.addAll(newNodes);
-                while (closestNodes.size() > MAX_FETCH_NODE_SET_SIZE)
-                    closestNodes.poll();
-                
-                // Add the newly added nodes for processing
-                List<Node> addedNodes = newNodes.stream()
-                    .filter(n -> closestNodes.contains(n))
-                    .collect(Collectors.toList());
-                nodesToProcess.addAll(addedNodes);
-                
-                System.out.println("Added: " + addedNodes + " - " +
-                                   (fetchedNodes.size() - addedNodes.size()) +
-                                   " skipped");
-                //System.out.println("New node set: " + nodesToProcess);
-            }
+            nodes = newNodes;
         }
-        System.out.println("Nodes processed: " + nodesProcessed);
-        result = new SearchResult(new ArrayList<>(closestNodes), value);
+        result = new SearchResult(new ArrayList<>(nodes), value);
         return result;
     }
 
@@ -94,7 +62,7 @@ public class Search {
                     return new SearchResult(response.nodes, null);
             }
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
         return new SearchResult(null,null);
     }
