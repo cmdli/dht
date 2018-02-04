@@ -3,6 +3,7 @@ package com.cmdli.dht;
 
 import java.util.*;
 import java.math.BigInteger;
+import java.util.function.Consumer;
 import java.util.stream.*;
 
 import com.cmdli.dht.*;
@@ -11,18 +12,18 @@ import com.cmdli.dht.messages.*;
 
 public class Search {
 
-    private final static int MAX_FETCH_NODE_SET_SIZE = 20; // Size of closest nodes set when fetching
+    private final static int SEARCH_NODES = 10; // Nodes to return from search
     
     private SearchResult result;
     private RoutingTable routingTable;
     private BigInteger key;
-    private boolean findNode;
+    private boolean findNodes; // Ignore result and just find closest nodes
     
-    public Search(RoutingTable routingTable, BigInteger key, boolean findNode) {
+    public Search(RoutingTable routingTable, BigInteger key, boolean findNodes) {
         this.result = null;
         this.routingTable = routingTable;
         this.key = key;
-        this.findNode = findNode;
+        this.findNodes = findNodes;
     }
 
     public SearchResult search() {
@@ -30,21 +31,30 @@ public class Search {
             return result;
         String value = null;
         Set<Node> nodes = new HashSet<>(routingTable.getNodesNearID(key, DHT.K));
+        Set<Node> added = new HashSet<>(nodes);
         while (!nodes.isEmpty()) {
             Set<Node> newNodes = new HashSet<>();
             for (Node node : nodes) {
                 SearchResult queryResult = queryNode(node);
-                if (queryResult.value != null) {
+                if (queryResult.value != null && findNodes) {
                     value = queryResult.value;
                     break;
                 }
-                newNodes.addAll(queryResult.nodes);
+                // Add all closer nodes
+                for (Node newNode : queryResult.nodes)
+                    if (newNode.id().xor(key).compareTo(node.id().xor(key)) < 0)
+                        newNodes.add(newNode);
+                added.addAll(newNodes);
             }
             if (value != null)
                 break;
             nodes = newNodes;
         }
-        result = new SearchResult(new ArrayList<>(nodes), value);
+        // Get K closest nodes found
+        List<Node> closestNodes = new ArrayList<>(added);
+        closestNodes.sort(Comparator.comparing(n -> n.id().xor(key)));
+        closestNodes = closestNodes.subList(0,SEARCH_NODES);
+        result = new SearchResult(closestNodes, value);
         return result;
     }
 
@@ -52,7 +62,7 @@ public class Search {
         try (
              Connection conn = new Connection().connect(node);
              ) {
-            if (findNode) {
+            if (findNodes) {
                 GetResponse fetchResponse = new FetchProtocol(conn).fetch(key);
                 if (fetchResponse != null)
                     return new SearchResult(fetchResponse.nodes, fetchResponse.value);

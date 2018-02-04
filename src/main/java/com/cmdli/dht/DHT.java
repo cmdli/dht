@@ -41,6 +41,10 @@ public class DHT {
         routingTable.addNode(node);
     }
 
+    public Map<String,String> storage() {
+        return storage;
+    }
+
     @Override
     public String toString() {
         return "Current Node: " + currentNode + "\n" + routingTable;
@@ -67,7 +71,7 @@ public class DHT {
         return result.value;
     }
 
-    public void put(BigInteger key, String value) {
+    public List<Node> put(BigInteger key, String value) {
         // Find closest nodes
         // Put key:value in those nodes
         SearchResult result = new Search(routingTable, key, false).search();
@@ -78,6 +82,7 @@ public class DHT {
                 new PutProtocol(conn).put(key, value);
             }
         }
+        return result.nodes;
     }
 
     // -------------------------------­-----------
@@ -98,17 +103,31 @@ public class DHT {
         for (DHT client1 : clients) {
             nodes.add(client1.currentNode());
             for (DHT client2 : clients) {
-                client1.addNode(client2.currentNode());
+                if (!client1.currentNode().equals(client2.currentNode()))
+                    client1.addNode(client2.currentNode());
             }
         }
-        BigInteger key = DHT.randomID(DHT.ID_LENGTH);
-        System.out.println("Key: 0x" + key.toString(16));
-        nodes.sort((n1, n2) -> (n1.id().xor(key).compareTo(n2.id().xor(key))));
-        System.out.println("Nodes: " + nodes);
-        DHT dht = clients.get(0);
-        dht.put(key,"value");
-        Thread.sleep(500);
-        System.out.println("Fetch result: " + dht.get(key));
+
+        for (int i = 0; i < 3; i++) {
+            BigInteger key = DHT.randomID(DHT.ID_LENGTH);
+            String value = Integer.toString(i);
+            System.out.println("Testing key: 0x" + key.toString(16));
+            nodes.sort((n1, n2) -> (n1.id().xor(key).compareTo(n2.id().xor(key))));
+            System.out.println("Sorted nodes: " + nodes);
+
+            DHT dht = clients.get(0);
+            System.out.println("Putting 0x" + key.toString(16) + ":" + value + "...");
+            List<Node> storageNodes = dht.put(key, value);
+            System.out.println("Stored in nodes " + storageNodes);
+            System.out.println("Expected in nodes " + nodes.subList(0,storageNodes.size()));
+            assert new HashSet<Node>(storageNodes).equals(new HashSet<>(nodes.subList(0,storageNodes.size())));
+            Thread.sleep(500);
+
+            System.out.println("Starting fetch...");
+            String result = dht.get(key);
+            System.out.println("Fetched (" + result + "), expected (" + value + ")");
+            assert result.equals(value);
+        }
         
         System.out.print("Stopping servers... ");
         for (DHT client : clients) {
