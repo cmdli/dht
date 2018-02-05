@@ -40,7 +40,7 @@ public class FindNodeProtocolTest {
         table.addNode(node);
         FakeConnection conn = new FakeConnection();
         new FindNodeProtocol(conn,table)
-            .respond(new FindNodeRequest(BigInteger.valueOf(5)));
+            .respond(GSON.toJson(new FindNodeRequest(BigInteger.valueOf(5))));
         List<String> messages = conn.getSentMessages();
         assertTrue(messages.size() == 1);
         assertEquals(new FindNodeResponse(Arrays.asList(node)),

@@ -46,7 +46,7 @@ public class FetchProtocolTest {
         Node node = new Node(key,null,-1);
         table.addNode(node);
         GetRequest request = new GetRequest(key);
-        new FetchProtocol(conn,table,storage).respond(request);
+        new FetchProtocol(conn,table,storage).respond(GSON.toJson(request));
         List<String> messages = conn.getSentMessages();
         assertTrue(messages.size() == 1);
         GetResponse response = GSON.fromJson(messages.get(0),GetResponse.class);

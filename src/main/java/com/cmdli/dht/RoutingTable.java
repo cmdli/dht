@@ -1,6 +1,7 @@
 
 package com.cmdli.dht;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.ArrayList;
 import java.math.BigInteger;
@@ -47,7 +48,7 @@ public class RoutingTable {
         // TODO: worth limiting it to strictly limit?
         return kBuckets.stream()
             .flatMap(List::stream)
-            .sorted((n1, n2) -> n1.id().xor(id).compareTo(n2.id().xor(id)))
+            .sorted(Comparator.comparing(n -> n.id().xor(id)))
             .limit(limit)
             .collect(Collectors.toList());
     }

@@ -37,7 +37,7 @@ public class PutProtocolTest {
         FakeConnection conn = new FakeConnection();
         String key = BigInteger.valueOf(5).toString(16);
         new PutProtocol(conn, storage)
-            .receive(new PutRequest(key, "value"));
+            .receive(GSON.toJson(new PutRequest(key, "value")));
         assertTrue(storage.size() == 1);
         assertTrue(storage.containsKey(key));
         assertEquals(storage.get(key), "value");
