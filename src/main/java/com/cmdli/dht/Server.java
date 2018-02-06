@@ -22,14 +22,12 @@ public class Server {
     private ServerSocket serverSocket;
     private Thread serverThread;
     private Node currentNode;
-    private Map<String,Protocol> protocols;
     
     public Server(Node currentNode, RoutingTable table, Map<String, String> storage, int port) {
         this.table = table;
         this.storage = storage;
         this.port = port;
         this.currentNode = currentNode;
-        this.protocols = new HashMap<>();
     }
 
     public boolean running() {
