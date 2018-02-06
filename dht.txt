@@ -15,3 +15,11 @@ Implementation:
    - From routing table, get set of nodes near id
    - Query nodes for other nodes near id
    - Get closest nodes near id until finding node id
+
+Features:
+ - Get: Done
+ - Put: Done
+ - Routing Table: Done
+ - Peer Discovery: TODO
+ - Peer keepalive: TODO
+ - Long term peer prioritization: TODO
