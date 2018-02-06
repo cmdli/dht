@@ -3,29 +3,28 @@ package com.cmdli.dht.protocols;
 
 import java.util.*;
 import java.math.BigInteger;
-import java.net.*;
-import java.io.*;
 
 import com.google.gson.*;
 
 import com.cmdli.dht.messages.*;
 import com.cmdli.dht.*;
 
-public class FetchProtocol {
+public class GetProtocol {
 
-    public static final Gson GSON = new Gson();
+    private static final Gson GSON = new Gson();
+    public static final String NAME = "GET";
     
     private RoutingTable table;
     private Map<String,String> storage;
     private Connection conn;
 
-    public FetchProtocol(Connection conn) {
+    public GetProtocol(Connection conn) {
         this(conn, null, null);
     }
     
-    public FetchProtocol(Connection conn,
-                         RoutingTable table,
-                         Map<String, String> storage) {
+    public GetProtocol(Connection conn,
+                       RoutingTable table,
+                       Map<String, String> storage) {
         this.conn = conn;
         this.table = table;
         this.storage = storage;

@@ -3,10 +3,8 @@ package com.cmdli.dht;
 
 import java.util.*;
 import java.math.BigInteger;
-import java.util.function.Consumer;
 import java.util.stream.*;
 
-import com.cmdli.dht.*;
 import com.cmdli.dht.protocols.*;
 import com.cmdli.dht.messages.*;
 
@@ -75,7 +73,7 @@ public class Search {
              Connection conn = new Connection().connect(node);
              ) {
             if (findNodes) {
-                GetResponse fetchResponse = new FetchProtocol(conn).fetch(key);
+                GetResponse fetchResponse = new GetProtocol(conn).fetch(key);
                 if (fetchResponse != null)
                     return new SearchResult(fetchResponse.nodes, fetchResponse.value);
             } else {

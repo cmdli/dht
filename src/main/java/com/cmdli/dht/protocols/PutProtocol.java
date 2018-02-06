@@ -12,6 +12,7 @@ import com.cmdli.dht.messages.*;
 public class PutProtocol {
 
     public static final Gson GSON = new Gson();
+    public static final String NAME = "PUT";
 
     private Connection conn;
     private Map<String,String> storage;

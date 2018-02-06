@@ -7,21 +7,20 @@ import java.math.BigInteger;
 import com.google.gson.*;
 
 import org.junit.Test;
-import org.junit.Ignore;
+
 import static org.junit.Assert.*;
 
 import com.cmdli.dht.*;
-import com.cmdli.dht.protocols.*;
 import com.cmdli.dht.messages.*;
 
-public class FetchProtocolTest {
+public class GetProtocolTest {
 
     public static final Gson GSON = new Gson();
     
     @Test
     public void testFetch() {
         FakeConnection conn = new FakeConnection();
-        FetchProtocol protocol = new FetchProtocol(conn);
+        GetProtocol protocol = new GetProtocol(conn);
         BigInteger key = BigInteger.valueOf(5);
         GetResponse response = new GetResponse(new ArrayList<>(), "value");
         
@@ -46,7 +45,7 @@ public class FetchProtocolTest {
         Node node = new Node(key,null,-1);
         table.addNode(node);
         GetRequest request = new GetRequest(key);
-        new FetchProtocol(conn,table,storage).respond(GSON.toJson(request));
+        new GetProtocol(conn,table,storage).respond(GSON.toJson(request));
         List<String> messages = conn.getSentMessages();
         assertTrue(messages.size() == 1);
         GetResponse response = GSON.fromJson(messages.get(0),GetResponse.class);

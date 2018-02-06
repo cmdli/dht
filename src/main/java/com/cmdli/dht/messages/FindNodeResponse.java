@@ -6,11 +6,12 @@ import java.util.Objects;
 
 import com.cmdli.dht.Node;
 import com.cmdli.dht.messages.Message;
+import com.cmdli.dht.protocols.FindNodeProtocol;
 
 public class FindNodeResponse extends Message {
     public List<Node> nodes;
     public FindNodeResponse(List<Node> nodes) {
-        super("FindNodeResponse");
+        super("FindNodeResponse", FindNodeProtocol.NAME);
         this.nodes = nodes;
     }
 

@@ -12,6 +12,7 @@ import com.cmdli.dht.messages.*;
 public class FindNodeProtocol {
 
     private static final Gson GSON = new Gson();
+    public static final String NAME = "FIND_NODE";
 
     private Connection conn;
     private RoutingTable table;

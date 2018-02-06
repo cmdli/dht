@@ -5,11 +5,12 @@ import java.util.Objects;
 import java.math.BigInteger;
 
 import com.cmdli.dht.messages.Message;
+import com.cmdli.dht.protocols.FindNodeProtocol;
 
 public class FindNodeRequest extends Message {
     public BigInteger key;
     public FindNodeRequest(BigInteger key) {
-        super("FindNodeRequest");
+        super("FindNodeRequest", FindNodeProtocol.NAME);
         this.key = key;
     }
 
