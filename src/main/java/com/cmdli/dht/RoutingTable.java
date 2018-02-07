@@ -40,12 +40,6 @@ public class RoutingTable {
     }
 
     public List<Node> getNodesNearID(BigInteger id, int limit) {
-        // Key: 0000
-        // 4: 1xxx
-        // 3: 01xx
-        // 2: 001x
-        // 1: 0001
-        // TODO: worth limiting it to strictly limit?
         return kBuckets.stream()
             .flatMap(List::stream)
             .sorted(Comparator.comparing(n -> n.id().xor(id)))
@@ -53,19 +47,18 @@ public class RoutingTable {
             .collect(Collectors.toList());
     }
 
+    public List<Node> allNodes() {
+        return kBuckets.stream().flatMap(List::stream).collect(Collectors.toList());
+    }
+
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Current key: ");
-        builder.append(currentKey);
-        builder.append("\n");
+        builder.append("Current key: ").append(currentKey).append("\n");
         int i = 0;
         for (List<Node> bucket : kBuckets) {
-            builder.append("Bucket ");
-            builder.append(i++);
-            builder.append(": ");
+            builder.append("Bucket ").append(i++).append(": ");
             for (Node node : bucket) {
-                builder.append(node);
-                builder.append(", ");
+                builder.append(node).append(", ");
             }
             builder.append("\n");
         }

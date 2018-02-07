@@ -81,6 +81,8 @@ public class Server {
                     case PutProtocol.NAME:
                         new PutProtocol(conn, storage).receive(json);
                         break;
+                    case GetPeerProtocol.NAME:
+                        new GetPeerProtocol(conn, table).respond(json);
                     }
                 }
             } catch (IOException e) {
