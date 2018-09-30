@@ -37,29 +37,26 @@ public class Search {
     private void step() {
         String value = null;
         Set<Node> newNodesSet = new HashSet<>();
-        List<Node> newNodes = new ArrayList<>();
         for (Node node : this.closestNodes) {
             SearchResult queryResult = queryNode(node);
-            if (queryResult.value != null && findNodes) {
+            if (queryResult.value != null && this.findNodes) {
                 value = queryResult.value;
                 break;
             }
             // Add all closer nodes
             for (Node newNode : queryResult.nodes) {
-                if (newNode.id().xor(key).compareTo(node.id().xor(key)) < 0 &&
-                        !newNodesSet.contains(newNode)) {
-                    newNodes.add(newNode);
+                if (newNode.id().xor(key).compareTo(node.id().xor(key)) < 0) {
                     newNodesSet.add(newNode);
                 }
             }
-            allNodes.addAll(newNodes);
         }
+        this.allNodes.addAll(newNodesSet);
         // Get K closest nodes as new query set
-        closestNodes = newNodes.stream()
+        this.closestNodes = newNodesSet.stream()
                 .sorted(Comparator.comparing(n -> n.id().xor(key)))
                 .limit(DHT.K)
                 .collect(Collectors.toSet());
-        if (value != null || newNodes.isEmpty()) {
+        if (value != null || newNodesSet.isEmpty()) {
             // Get K closest nodes of all found
             List<Node> closestNodes = new ArrayList<>(this.allNodes);
             closestNodes.sort(Comparator.comparing(n -> n.id().xor(key)));
