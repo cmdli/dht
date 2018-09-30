@@ -27,6 +27,7 @@ public class RoutingTable {
     }
 
     public void addNode(Node node) {
+        // e.g. 011001 xor 010001 = 001000, bit length 4
         int bucketI = currentKey.xor(node.id()).bitLength()-1;
         if (bucketI < 0) { // Bits are exactly the same
             return;
