@@ -9,7 +9,8 @@ import com.cmdli.dht.Node;
 public class Connection implements Closeable {
 
     public final static boolean LOGGING = false;
-    
+
+    private Node remoteNode;
     private Socket socket;
 
     public Connection() {
@@ -22,11 +23,12 @@ public class Connection implements Closeable {
 
     public Connection connect(Node node) {
         try {
+            this.remoteNode = node;
             if (LOGGING) System.out.printf("Connecting to %s:%d... ", node.address(), node.port());
             socket = new Socket(node.address(),node.port());
             if (LOGGING) System.out.println("Connected.");
         } catch (IOException e) {
-            System.err.println(e);
+            e.printStackTrace();
         }
         return this;
     }
@@ -56,10 +58,17 @@ public class Connection implements Closeable {
     public void send(String message) {
         if (socket == null)
             return;
+        if (message == null)
+            throw new IllegalArgumentException("Trying to send null message");
         try {
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            if (LOGGING) System.out.println("Sending - " + message);
-            out.write(message);
+            if (LOGGING) {
+                if (this.remoteNode != null)
+                    System.out.println("Sending to " + remoteNode.id() + " - " + message);
+                else
+                    System.out.println("Responding - " + message);
+            }
+            out.write(message + "\n");
             out.flush();
         } catch (IOException e) {
             System.err.println(e);
