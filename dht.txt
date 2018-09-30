@@ -9,6 +9,10 @@ Distributed Hash Table:
   - Maintained references from node to node to speed up get/put
   - Typically logarithmic (nodes reference close nodes and exponentially farther nodes)
   - Allows O(log n) get/put
+- Distance function:
+  - Each node has a key of 20 bits
+  - Same with each piece of data
+  - Distance between keys is XOR(key1,key2)
 
 Implementation:
  - Get:
