@@ -34,7 +34,8 @@ public class RoutingTable {
         }
         List<Node> bucket = kBuckets.get(bucketI);
         if (bucket.size() < k) {
-            bucket.add(node);
+            if (!bucket.contains(node))
+                bucket.add(node);
         } else {
             // TODO: Store extra nodes/cleanup nodes?
         }

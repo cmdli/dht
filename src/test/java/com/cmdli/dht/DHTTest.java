@@ -22,23 +22,24 @@ public class DHTTest {
             clients.add(newDHT);
         }
         // Add clients to node list and add next client as peer
-        for (DHT dht : clients) {
+        for (int i = 0; i < clients.size(); i++) {
+            DHT dht = clients.get(i);
             nodes.add(dht.currentNode());
-            //dht.addNode(clients.get((i+1)%clients.size()).currentNode());
-            for (DHT otherDHT : clients) {
+            dht.addNode(clients.get((i+1)%clients.size()).currentNode());
+            /*for (DHT otherDHT : clients) {
                 dht.addNode(otherDHT.currentNode());
-            }
+            }*/
         }
         System.out.println(" done.");
 
         // Run peer protocol 10 times for each node
-        /*System.out.print("Running peer protocol...");
+        System.out.print("Running peer protocol...");
         for (int i = 0; i < 10; i++) {
             for (DHT client : clients) {
                 client.update();
             }
         }
-        System.out.println(" done.");*/
+        System.out.println(" done.");
 
         for (int i = 0; i < 3; i++) {
             BigInteger key = DHT.randomID(DHT.ID_LENGTH);

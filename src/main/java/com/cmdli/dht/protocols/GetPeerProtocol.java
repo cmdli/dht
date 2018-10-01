@@ -31,6 +31,7 @@ public class GetPeerProtocol {
         conn.send(GSON.toJson(new GetPeerRequest()));
         String json = conn.receive();
         GetPeerResponse response = GSON.fromJson(json, GetPeerResponse.class);
+        if (response == null) System.out.println(json);
         if (response.nodes == null) System.out.println(json + " - " + response);
         return response.nodes;
     }
