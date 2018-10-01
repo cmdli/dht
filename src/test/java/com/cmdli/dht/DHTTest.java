@@ -12,20 +12,33 @@ public class DHTTest {
 
     @Test
     public void DHTEndToEndTest() throws InterruptedException {
+        int numClients = 1000;
+        System.out.print("Creating " + numClients + " clients...");
         List<Node> nodes = new ArrayList<>();
         List<DHT> clients = new ArrayList<>();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < numClients; i++) {
             DHT newDHT = new DHT();
             newDHT.startServer();
             clients.add(newDHT);
         }
-        for (DHT client1 : clients) {
-            nodes.add(client1.currentNode());
-            for (DHT client2 : clients) {
-                if (!client1.currentNode().equals(client2.currentNode()))
-                    client1.addNode(client2.currentNode());
+        // Add clients to node list and add next client as peer
+        for (DHT dht : clients) {
+            nodes.add(dht.currentNode());
+            //dht.addNode(clients.get((i+1)%clients.size()).currentNode());
+            for (DHT otherDHT : clients) {
+                dht.addNode(otherDHT.currentNode());
             }
         }
+        System.out.println(" done.");
+
+        // Run peer protocol 10 times for each node
+        /*System.out.print("Running peer protocol...");
+        for (int i = 0; i < 10; i++) {
+            for (DHT client : clients) {
+                client.update();
+            }
+        }
+        System.out.println(" done.");*/
 
         for (int i = 0; i < 3; i++) {
             BigInteger key = DHT.randomID(DHT.ID_LENGTH);
@@ -40,6 +53,7 @@ public class DHTTest {
             System.out.println("Stored in nodes " + storageNodes);
             System.out.println("Expected in nodes " + nodes.subList(0,storageNodes.size()));
             assertTrue(new HashSet<>(storageNodes).equals(new HashSet<>(nodes.subList(0,storageNodes.size()))));
+            System.out.println("Nodes match!");
             Thread.sleep(500);
 
             System.out.println("Starting fetch...");

@@ -2,16 +2,10 @@
 package com.cmdli.dht;
 
 import java.util.*;
-import java.util.stream.*;
-import java.net.*;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
-import java.io.*;
 
 import com.google.gson.*;
 
-import com.cmdli.dht.*;
-import com.cmdli.dht.messages.*;
 import com.cmdli.dht.protocols.*;
 
 public class DHT {
@@ -73,8 +67,8 @@ public class DHT {
 
     public List<Node> put(BigInteger key, String value) {
         // Find closest nodes
-        // Put key:value in those nodes
         SearchResult result = new Search(routingTable, key, false).search();
+        // Put key:value in those nodes
         for (Node node : result.nodes) {
             try (
                  Connection conn = new Connection().connect(node)
@@ -83,6 +77,23 @@ public class DHT {
             }
         }
         return result.nodes;
+    }
+
+    // Call this every once in awhile
+    public void update() {
+        for (Node node : routingTable.allNodes()) {
+            try (Connection conn = new Connection().connect(node)) {
+                GetPeerProtocol protocol = new GetPeerProtocol(conn,routingTable);
+                List<Node> nodes = protocol.fetch();
+                if (nodes != null) {
+                    for (Node receivedNode : nodes) {
+                        routingTable.addNode(receivedNode);
+                    }
+                } else {
+                    System.err.println("Failed to receive nodes from " + node.id());
+                }
+            }
+        }
     }
 
     // -------------------------------­-----------

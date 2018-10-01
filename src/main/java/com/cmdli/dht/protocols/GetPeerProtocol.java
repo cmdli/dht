@@ -29,7 +29,9 @@ public class GetPeerProtocol {
 
     public List<Node> fetch() {
         conn.send(GSON.toJson(new GetPeerRequest()));
-        GetPeerResponse response = GSON.fromJson(conn.receive(), GetPeerResponse.class);
+        String json = conn.receive();
+        GetPeerResponse response = GSON.fromJson(json, GetPeerResponse.class);
+        if (response.nodes == null) System.out.println(json + " - " + response);
         return response.nodes;
     }
 }
